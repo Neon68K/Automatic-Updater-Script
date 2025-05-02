@@ -9,6 +9,36 @@ mkdir -p "$DEST_DIR"
 mkdir -p "$TMP_DIR"
 mkdir -p "/media/fat/Scripts/.config/neon68k"
 
+check_for_update() {
+        
+    current_script="$0"
+        
+    #upstream_script="https://raw.githubusercontent.com/Neon68K/Automatic-Updater-Script/refs/heads/main/update_neon68k.sh"
+    upstream_script="https://uncomentaboveanddeleteme"
+
+    # Retrieve the latest script from upstream 
+    curl -kLs $upstream_script -o $TMP_DIR/update_neon68k.sh
+    if [[ $? -ne 0 ]]; then
+        # Add a dialog informing user auto update failed. 
+        return  
+                
+    else    
+        latest_script="$TMP_DIR/update_neon68k.sh"
+    fi
+        
+    # Compare new and old script, if different, replace and rerun.
+    if diff "$current_script" "$latest_script" > /dev/null 2>&1; then
+      continue
+    else    
+      chmod +x "$latest_script"
+      mv "$latest_script" "$current_script"
+      exec "$current_script"
+    fi  
+}
+        
+check_for_update 
+
+
 # Show dialog prompt for full download
 dialog --clear --title "Download All Files?" \
 --yesno "Do you want to download the full Neon68K set?" 7 50
@@ -124,6 +154,7 @@ sync_files() {
     date +%s > "$LASTRUN_FILE"
 }
 
+clear
 sync_files
 clear
 echo "Done."
