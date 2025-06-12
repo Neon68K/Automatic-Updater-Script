@@ -15,6 +15,10 @@ CONFIG_DIR="${SCRIPTS_DIR}/.config/neon68k"
 LASTRUN_FILE="${CONFIG_DIR}/lastrun.txt"
 SCRIPT_INI="${SCRIPTS_DIR}/update_neon68k.ini"
 
+[[ -e "${DEST_DIR}"   ]] || mkdir -p "$DEST_DIR"
+[[ -e "${TMP_DIR}"    ]] || mkdir -p "$TMP_DIR"
+[[ -e "${CONFIG_DIR}" ]] || mkdir -p "${CONFIG_DIR}"
+
 # Paths to check for games directory
 MEDIA_PATHS=(
   '/media/usb0'
@@ -34,9 +38,6 @@ for media_path in "${MEDIA_PATHS[@]}"; do
   fi
 done
 
-[[ -e "${DEST_DIR}"   ]] || mkdir -p "$DEST_DIR"
-[[ -e "${TMP_DIR}"    ]] || mkdir -p "$TMP_DIR"
-[[ -e "${CONFIG_DIR}" ]] || mkdir -p "${CONFIG_DIR}"
 [[ -f "${SCRIPT_INI}" ]] && source "${SCRIPT_INI}"
 
 # Function to get values from an ini file
@@ -159,6 +160,7 @@ sync_files() {
 
     date +%s > "$LASTRUN_FILE"
     rm -f ${ARCHIVE_METADATA}
+    echo "Sync complete."
 }
 
 choose_scaler() {
@@ -187,19 +189,6 @@ choose_scaler() {
 }
 
 main_dialog() {
-  if [ -f ${LASTRUN_FILE} ]; then
-    full_download=0
-  else
-    full_download=1
-  fi
-
-  if [[ -z "$(ini_get scaler)" ]]; then
-    choose_scaler
-  fi
-
-  # Determine scaler path
-  scaler_dir="$(get_scaler "$(ini_get scaler)")"
-
   echo "
                _   __                     _____  ____   __ __
               / | / /___   ____   ____   / ___/ ( __ ) / //_/
@@ -208,16 +197,44 @@ main_dialog() {
            /_/ |_/ \___/ \____//_/ /_/ \____/ \____//_/ |_|
 
         Neon68K - the easiest X68000 games setup for MiSTer FPGA
+"
 
-Launching update_neon68k...
+  if [[ -z "$(ini_get scaler)" ]]; then
+    choose_scaler
+  fi
 
-Current settings:
+  # Determine scaler path
+  scaler_dir="$(get_scaler "$(ini_get scaler)")"
+
+  echo "Current settings:
   * Games install path: ${GAMES_PATH}/games
   * Scaler: ${scaler_dir}
 "
+
   if [[ -f ${LASTRUN_FILE} ]]; then
         echo "update_neon68k was last run $(date -d @"$(cat ${LASTRUN_FILE})")"
   fi
+
+  if [ -f ${LASTRUN_FILE} ]; then
+    full_download=0
+  else
+    if dialog \
+      --clear \
+      --title "update_neon68k First Time Run" \
+      --yesno "No last run file was found. Have you already downloaded Neon68K?\nAnswering No will trigger a full download." \
+      10 50
+    then
+      date +%s > "$LASTRUN_FILE"
+      full_download=0
+    else
+      full_download=1
+    fi
+
+    clear -x
+    sync_files
+    exit
+  fi
+
   echo "
   *Press <UP>,    To select scaler option.
   *Press <LEFT>,  To exit.
@@ -262,5 +279,3 @@ Waiting for 10 seconds then we'll automatically check for updates...
 
 main_dialog
 sync_files
-echo "Sync complete."
-echo "Done."
