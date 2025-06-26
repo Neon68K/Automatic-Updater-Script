@@ -20,6 +20,7 @@ SCRIPT_INI="${SCRIPTS_DIR}/update_neon68k.ini"
 [[ -e "${CONFIG_DIR}" ]] || mkdir -p "${CONFIG_DIR}"
 
 # Paths to check for games directory
+# https://mister-devel.github.io/MkDocs_MiSTer/cores/paths/#path-priority
 MEDIA_PATHS=(
   '/media/usb0'
   '/media/usb1'
@@ -27,6 +28,7 @@ MEDIA_PATHS=(
   '/media/usb3'
   '/media/usb4'
   '/media/usb5'
+  '/media/network'
   '/media/fat/cifs'
   '/media/fat'
 )
